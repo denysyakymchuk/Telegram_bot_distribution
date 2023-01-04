@@ -20,29 +20,9 @@ chat_id = -746607958
 async def funcname():
     l = await bot.get_chat(chat_id)
     print(l)
-    # link = await bot.get_chat_administrators(chat_id=chat_id)
-    # li = await bot.export_chat_invite_link(chat_id=chat_id)
-    # #print(l)
-    # print(link)
+
 #JBC3ux5knZ4j9n2
-#
-# class States_p(StatesGroup):
-#     STATE_M = State()
-#
-#
-# @dp.message_handler(content_types=['text'], state=None)
-# async def st(message: types.Message):
-#     await States_p.STATE_M.set()
-#
-#
-# @dp.message_handler(content_types=['text'], state=States_p.STATE_M)
-# async def cm_start(message: types.Message):
-#     d = await bot.get_chat_members_count(chat_id)
-#     print(d)
-    #m = await bot.copy_message(chat_id=chat_id, from_chat_id=my_id, message_id=message.message_id)
 
 
 
 asyncio.run(funcname())
-# if __name__ == "__main__":
-#     executor.start_polling(dp, skip_updates=True)
