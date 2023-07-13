@@ -1,28 +1,44 @@
-from datetime import datetime, timedelta
-import asyncio
-from aiogram import *
-from aiogram import Bot, Dispatcher, executor, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-#use the session here
+from aiogram.utils import executor
+from telethon.sync import TelegramClient
+from telethon import functions
+
+from config import dp, API_ID, API_HASH
 
 
+# States
+class Form(StatesGroup):
+    message = State()
 
-TOKEN = '5213744918:AAGJ0soqQPOyn1wgY2_5FYgMOw8lQrbdyKQ'
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
-chat_id = -746607958
+@dp.message_handler(commands='sms')
+async def cmd_start(message: types.Message):
+    await Form.message.set()
+    await message.reply("Введите сообщение для отправки:")
 
+@dp.message_handler(state=Form.message)
+async def process_message(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['message'] = message.text
 
-async def funcname():
-    l = await bot.get_chat_members_count(chat_id)
-    print(l)
+    await state.finish()
 
-#JBC3ux5knZ4j9n2
+    async with TelegramClient('session_name', API_ID, API_HASH) as client:
+        await client.start()
+        names = ['https://t.me/nix_cash', 'https://t.me/ValerkaHell']
+        for name in names:
+            result = await client(functions.messages.SendMessageRequest(
+                peer=name,
+                message=data['message']
+            ))
+        await client.disconnect()
 
+    await message.reply("Сообщение успешно отправлено!")
 
+    # Отправка SMS-сообщения
+    with TelegramClient('session_name', API_ID, API_HASH) as client:
+        client.send_message('your_phone_number', data['message'])
 
 if __name__ == '__main__':
-    asyncio.run(funcname())
     executor.start_polling(dp, skip_updates=True)
