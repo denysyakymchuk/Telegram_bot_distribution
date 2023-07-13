@@ -1,19 +1,42 @@
+import sqlalchemy
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils import executor
 from telethon.sync import TelegramClient
 from telethon import functions
-
-from config import dp, API_ID, API_HASH
+from config import dp, API_ID, API_HASH, session, conn
+from keyboard import buttons_start
+from models import group
 
 
 # States
 class Form(StatesGroup):
     message = State()
 
+
+@dp.message_handler(commands='start')
+async def start(message: types.Message):
+    await message.reply("Привіт!", reply_markup=buttons_start)
+
+
+@dp.message_handler(commands='group')
+async def group_func(message: types.Message):
+    a = group.insert().values([{
+        'link':'wedw'
+    }])
+    conn.execute(a)
+
+
+@dp.message_handler(commands='list')
+async def group_func(message: types.Message):
+    select = sqlalchemy.select(group)
+    select_r = conn.execute(select)
+    await message.reply(select_r.fetchall())
+
+
 @dp.message_handler(commands='sms')
-async def cmd_start(message: types.Message):
+async def build_sms(message: types.Message):
     await Form.message.set()
     await message.reply("Введите сообщение для отправки:")
 
@@ -26,7 +49,7 @@ async def process_message(message: types.Message, state: FSMContext):
 
     async with TelegramClient('session_name', API_ID, API_HASH) as client:
         await client.start()
-        names = ['https://t.me/nix_cash', 'https://t.me/ValerkaHell']
+        names = ['https://t.me/Denchyk_p']
         for name in names:
             result = await client(functions.messages.SendMessageRequest(
                 peer=name,
@@ -36,9 +59,7 @@ async def process_message(message: types.Message, state: FSMContext):
 
     await message.reply("Сообщение успешно отправлено!")
 
-    # Отправка SMS-сообщения
-    with TelegramClient('session_name', API_ID, API_HASH) as client:
-        client.send_message('your_phone_number', data['message'])
+
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
