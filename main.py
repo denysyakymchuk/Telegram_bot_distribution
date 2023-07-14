@@ -7,7 +7,7 @@ from aiogram.utils import executor
 from telethon.sync import TelegramClient
 from telethon import functions
 from config import dp, API_ID, API_HASH, session, conn, engine
-from keyboard import buttons_start, key_group
+from keyboard import buttons_start, key_group, key_user
 from models import group
 
 
@@ -23,6 +23,11 @@ class FormGroup(StatesGroup):
 @dp.message_handler(commands='start')
 async def start(message: types.Message):
     await message.reply("Привіт!", reply_markup=buttons_start)
+
+
+@dp.message_handler(commands='user')
+async def user_func(message: types.Message):
+    await message.reply("Вибери  дію: ", reply_markup=key_user)
 
 
 @dp.message_handler(commands='group')

@@ -11,6 +11,6 @@ list_group = KeyboardButton('/list')
 key_group = ReplyKeyboardMarkup(resize_keyboard=True).add(new_group, list_group)
 
 
-new_user = KeyboardButton('/New')
+new_user = KeyboardButton('/create')
 list_user = KeyboardButton('/List')
 key_user = ReplyKeyboardMarkup(resize_keyboard=True).add(new_user, list_user)
