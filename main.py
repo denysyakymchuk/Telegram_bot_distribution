@@ -4,11 +4,12 @@ from aiogram.bot import bot
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils import executor
+from sqlalchemy.orm import state
 from telethon.sync import TelegramClient
 from telethon import functions
 from config import dp, API_ID, API_HASH, session, conn, engine
 from keyboard import buttons_start, key_group, key_user
-from models import group
+from models import group, user
 
 
 # States
@@ -19,16 +20,62 @@ class Form(StatesGroup):
 class FormGroup(StatesGroup):
     link = State()
 
+class FormUser(StatesGroup):
+    api_id = State()
+    api_hash = State()
+    phone_number = State()
 
 @dp.message_handler(commands='start')
 async def start(message: types.Message):
     await message.reply("Привіт!", reply_markup=buttons_start)
-
+#-------------------------------------------------------------#
 
 @dp.message_handler(commands='user')
 async def user_func(message: types.Message):
     await message.reply("Вибери  дію: ", reply_markup=key_user)
 
+
+@dp.message_handler(commands='see')
+async def see_user(message: types.Message):
+    users = sqlalchemy.select(user)
+    select_r = conn.execute(users)
+    await message.reply(select_r.fetchall(), reply_markup=buttons_start)
+
+@dp.message_handler(commands='create')
+async def create_user(message: types.Message):
+    await message.reply("Введи api_id: ", reply_markup=key_group)
+    await FormUser.api_id.set()
+
+
+@dp.message_handler(state=FormUser.api_id)
+async def fsm_api_id_user(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['api_id'] = message.text
+    await message.reply("Введи api_hash: ", reply_markup=key_group)
+    await FormUser.api_hash.set()
+
+
+@dp.message_handler(state=FormUser.api_hash)
+async def fsm_api_id_user(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['api_hash'] = message.text
+    await message.reply("Введи номер телефону: ", reply_markup=key_group)
+    await FormUser.phone_number.set()
+
+
+@dp.message_handler(state=FormUser.phone_number)
+async def fsm_api_id_user(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['phone_number'] = message.text
+    await message.reply("Дані записано: ", reply_markup=buttons_start)
+    with engine.connect() as conn:
+        dt = user.insert().values(api_id=data['api_id'], api_hash=data['api_hash'], phone_number=data['phone_number'])
+        conn.execute(dt)
+        conn.commit()
+    await state.finish()
+
+
+#-------------------------------------------------------------#
 
 @dp.message_handler(commands='group')
 async def group_func(message: types.Message):
@@ -56,6 +103,7 @@ async def group_func(message: types.Message):
     select = sqlalchemy.select(group)
     select_r = conn.execute(select)
     await message.reply(select_r.fetchall(), reply_markup=buttons_start)
+#-------------------------------------------------------------#
 
 
 @dp.message_handler(commands='sms')

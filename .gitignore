@@ -1,3 +1,4 @@
 /venv/
 /.idea/
-/text.txt
+test.db
+session_name.session
