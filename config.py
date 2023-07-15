@@ -8,7 +8,7 @@ from sqlalchemy import MetaData
 
 logging.basicConfig(level=logging.INFO)
 
-API_TOKEN = ''  # Ваш токен API для бота
+API_TOKEN = '5213744918:AAGJ0soqQPOyn1wgY2_5FYgMOw8lQrbdyKQ'  # Ваш токен API для бота
 API_ID = ''  # Ваш API ID из приложения Telegram
 API_HASH = ''  # Ваш API Hash из приложения Telegram
 
