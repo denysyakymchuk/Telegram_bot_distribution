@@ -133,6 +133,7 @@ async def fsm_select_user(message: types.Message, state: FSMContext):
     await Form.message.set()
 
 #write message
+
 @dp.message_handler(state=Form.message)
 async def process_message(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
