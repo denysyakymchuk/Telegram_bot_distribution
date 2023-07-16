@@ -174,17 +174,16 @@ async def process_message(message: types.Message, state: FSMContext):
 
     await state.finish()
 
-    # select data from db
-
-    # Отправка запроса на генерацию кода подтверждения Telethon
-    # await client.send_code_request(str(usr[3]))
-
     # create client and send sms
     async with TelegramClient('session_name', int(usr[1]), str(usr[2])) as client:
         await client.start()
-        names = ['https://t.me/Denchyk_p']
 
-        for name in names:
+        stmt = sqlalchemy.select(group.c.link)
+        result = conn.execute(stmt)
+        column_values = result.fetchall()
+        value_list = [value for (value,) in column_values]
+
+        for name in value_list:
             result = await client(functions.messages.SendMessageRequest(
                 peer=name,
                 message=data['message']
