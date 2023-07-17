@@ -9,6 +9,7 @@ from telethon import functions
 from config import dp, session, conn, engine, bot
 from keyboard import buttons_start, key_group, key_user
 from models import group, user
+from tools import ref_data
 
 
 # States for send sms
@@ -29,6 +30,7 @@ class FormGroupDelete(StatesGroup):
 
 # States for insert user data
 class FormUser(StatesGroup):
+    title = State()
     api_id = State()
     api_hash = State()
     phone_number = State()
@@ -53,17 +55,25 @@ async def user_func(message: types.Message):
 # return list of users
 @dp.message_handler(commands='see')
 async def see_user(message: types.Message):
-    users = sqlalchemy.select(user)
+    users = sqlalchemy.select(user.c.id, user.c.title)
     select_r = conn.execute(users)
-    await message.reply(select_r.fetchall(), reply_markup=buttons_start)
+
+    await message.reply(ref_data(select_r.fetchall()), reply_markup=buttons_start)
 
 
 # start states for create user
 @dp.message_handler(commands='create')
 async def create_user(message: types.Message):
+    await message.reply("Введи назву користувача: ", reply_markup=key_group)
+    await FormUser.title.set()
+
+
+@dp.message_handler(state=FormUser.title)
+async def fsm_api_id_user(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['title'] = message.text
     await message.reply("Введи api_id: ", reply_markup=key_group)
     await FormUser.api_id.set()
-
 
 # state for insert api_id user
 @dp.message_handler(state=FormUser.api_id)
@@ -88,12 +98,14 @@ async def fsm_api_id_user(message: types.Message, state: FSMContext):
 async def fsm_api_id_user(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['phone_number'] = message.text
-    await message.reply("Дані записано: ", reply_markup=buttons_start)
+
     with engine.connect() as conn:
-        dt = user.insert().values(api_id=data['api_id'], api_hash=data['api_hash'], phone_number=data['phone_number'])
+        dt = user.insert().values(title=data['title'], api_id=data['api_id'], api_hash=data['api_hash'], phone_number=data['phone_number'])
         conn.execute(dt)
         conn.commit()
+
     await state.finish()
+    await message.reply("Дані записано: ", reply_markup=buttons_start)
 
 
 @dp.message_handler(commands='delete⛔')
@@ -101,7 +113,8 @@ async def delete_group(message: types.Message):
     await message.reply('Введи номер групи для видалення:', reply_markup=buttons_start)
     select = sqlalchemy.select(user)
     select_r = conn.execute(select)
-    await message.reply(f'{select_r.fetchall()}')
+
+    await message.reply(f'{ref_data(select_r.fetchall())}')
     await FormUserDelete.id_user.set()
 
 
@@ -146,7 +159,7 @@ async def process_link(message: types.Message, state: FSMContext):
 async def group_func(message: types.Message):
     select = sqlalchemy.select(group)
     select_r = conn.execute(select)
-    await message.reply(select_r.fetchall(), reply_markup=buttons_start)
+    await message.reply(ref_data(select_r.fetchall()), reply_markup=buttons_start)
 
 
 # delete group
@@ -155,7 +168,8 @@ async def delete_group(message: types.Message):
     await message.reply('Введи номер групи для видалення:', reply_markup=buttons_start)
     select = sqlalchemy.select(group)
     select_r = conn.execute(select)
-    await message.reply(f'{select_r.fetchall()}')
+
+    await message.reply(f'{ref_data(select_r.fetchall())}')
     await FormGroupDelete.id_group.set()
 
 @dp.message_handler(state=FormGroupDelete.id_group)

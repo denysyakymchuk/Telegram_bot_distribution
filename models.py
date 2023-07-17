@@ -6,6 +6,7 @@ user = Table(
      "users",
      metadata_obj,
      Column("id", Integer, primary_key=True),
+     Column("title", String(50)),
      Column("api_id", Integer),
      Column("api_hash", String(50)),
      Column("phone_number", String(30))
