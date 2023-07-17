@@ -3,6 +3,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils import executor
+from sqlalchemy import delete
 from telethon.sync import TelegramClient
 from telethon import functions
 from config import dp, session, conn, engine, bot
@@ -22,12 +23,19 @@ class FormGroup(StatesGroup):
     link = State()
 
 
+class FormGroupDelete(StatesGroup):
+    id_group = State()
+
+
 # States for insert user data
 class FormUser(StatesGroup):
     api_id = State()
     api_hash = State()
     phone_number = State()
 
+
+class FormUserDelete(StatesGroup):
+    id_user = State()
 
 # main start command. Return message and main keyboard
 @dp.message_handler(commands='start')
@@ -88,6 +96,25 @@ async def fsm_api_id_user(message: types.Message, state: FSMContext):
     await state.finish()
 
 
+@dp.message_handler(commands='delete⛔')
+async def delete_group(message: types.Message):
+    await message.reply('Введи номер групи для видалення:', reply_markup=buttons_start)
+    select = sqlalchemy.select(user)
+    select_r = conn.execute(select)
+    await message.reply(f'{select_r.fetchall()}')
+    await FormUserDelete.id_user.set()
+
+
+@dp.message_handler(state=FormUserDelete.id_user)
+async def deleting_group(message: types.Message, state: FSMContext):
+    delete_statement = delete(user).where(user.c.id == message.text)
+    # Выполнение операции удаления
+    conn.execute(delete_statement)
+    conn.commit()
+    await message.reply('Користувача видалено!', reply_markup=buttons_start)
+    await state.finish()
+
+
 # -------------------------------GROUP BLOCK------------------------------#
 
 # return keyboard: list of group and new group link
@@ -121,6 +148,24 @@ async def group_func(message: types.Message):
     select_r = conn.execute(select)
     await message.reply(select_r.fetchall(), reply_markup=buttons_start)
 
+
+# delete group
+@dp.message_handler(commands='delete🚫')
+async def delete_group(message: types.Message):
+    await message.reply('Введи номер групи для видалення:', reply_markup=buttons_start)
+    select = sqlalchemy.select(group)
+    select_r = conn.execute(select)
+    await message.reply(f'{select_r.fetchall()}')
+    await FormGroupDelete.id_group.set()
+
+@dp.message_handler(state=FormGroupDelete.id_group)
+async def deleting_group(message: types.Message, state: FSMContext):
+    delete_statement = delete(group).where(group.c.id == message.text)
+    # Выполнение операции удаления
+    conn.execute(delete_statement)
+    conn.commit()
+    await message.reply('Групу видалено!', reply_markup=buttons_start)
+    await state.finish()
 
 # ------------------------------SMS BLOCK-------------------------------#
 

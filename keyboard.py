@@ -7,9 +7,11 @@ buttons_start = ReplyKeyboardMarkup(resize_keyboard=True).add(sms, group, messag
 
 new_group = KeyboardButton('/new')
 list_group = KeyboardButton('/list')
-key_group = ReplyKeyboardMarkup(resize_keyboard=True).add(new_group, list_group)
+delete_group = KeyboardButton('/delete🚫')
+key_group = ReplyKeyboardMarkup(resize_keyboard=True).add(new_group, list_group, delete_group)
 
 
 new_user = KeyboardButton('/create')
 list_user = KeyboardButton('/see')
-key_user = ReplyKeyboardMarkup(resize_keyboard=True).add(new_user, list_user)
+delete_user = KeyboardButton('/delete⛔')
+key_user = ReplyKeyboardMarkup(resize_keyboard=True).add(new_user, list_user, delete_user)
