@@ -42,6 +42,7 @@ class FormUser(StatesGroup):
 class FormUserDelete(StatesGroup):
     id_user = State()
 
+
 # main start command. Return message and main keyboard
 @dp.message_handler(commands='start')
 async def start(message: types.Message):
