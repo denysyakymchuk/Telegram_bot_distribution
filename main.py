@@ -17,6 +17,8 @@ from log import write_logs
 
 # States for send sms
 class Form(StatesGroup):
+    select_group = State()
+    optional_groups = State()
     select_user = State()
     insert_veryf_code = State()
     message = State()
@@ -290,25 +292,21 @@ async def fsm_select_user(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['select_user'] = message.text
 
-        # await message.reply('Введи повідомлення:')
         global clientt, usr
         usr = session.query(user).filter_by(id=data['select_user']).first()
 
         clientt = TelegramClient('session', api_id=int(usr[2]), api_hash=str(usr[3]))
 
-        try:
-            await clientt.start(phone=usr[4])
-            await clientt.send_code_request(str(usr[4]))
-        except:
-            None
+        await clientt.start(phone=usr[4])
+        await clientt.send_code_request(str(usr[4]))
 
         await message.reply('Введи верифікаційний код:')
         await Form.insert_veryf_code.set()
 
     except Exception as error:
         write_logs(error)
-        await message.reply('Помилка! Спробуйте ще раз!\nПеревірте введені дані')
-        await state.finish()
+        # await message.reply('Помилка! Спробуйте ще раз!\nПеревірте введені дані')
+        await Form.insert_veryf_code.set()
 
 
 # authorization of user
@@ -316,13 +314,38 @@ async def fsm_select_user(message: types.Message, state: FSMContext):
 async def insert_ver_code(message: types.Message, state: FSMContext):
     try:
         await clientt.sign_in(code=message.text)
-        await message.reply('Введи повідомлення:')
-        await Form.message.set()
+        await message.reply('Вибери групи:', reply_markup=optional_selecting_groups)
+        await Form.select_group.set()
 
     except Exception as error:
         write_logs(error)
         await message.reply('Помилка! Спробуйте ще раз!\nПеревірте введені дані')
         await state.finish()
+
+
+@dp.message_handler(state=Form.select_group)
+async def process_select_group(message: types.Message, state: FSMContext):
+    if message.text == '/all':
+        async with state.proxy() as data:
+            data['groups'] = True
+        await message.reply('Введи повідомлення:', reply_markup=key_group)
+        await Form.message.set()
+
+    elif message.text == '/select':
+        async with state.proxy() as data:
+            data['groups'] = False
+        await message.reply('Введи номера груп в котрі потрібно надіслати повідомлення:\nПриклад: 1, 3, 5', reply_markup=key_group)
+        await Form.optional_groups.set()
+
+
+@dp.message_handler(state=Form.optional_groups)
+async def optional_selecting_groups(message: types.Message, state: FSMContext):
+    id_list = [int(x) for x in message.text.split(',')]
+    stmt = sqlalchemy.select(group).where(group.c.id.in_(id_list))
+    results = session.execute(stmt).fetchall()
+    async with state.proxy() as data:
+        data['selected_groups'] = message.text
+    await Form.message.set()
 
 
 # write message
@@ -334,11 +357,19 @@ async def process_message(message: types.Message, state: FSMContext):
 
         await state.finish()
 
-        stmt = sqlalchemy.select(group.c.link)
-        result = conn.execute(stmt)
-        column_values = result.fetchall()
+        global value_list
+        value_list = []
 
-        value_list = [value for (value,) in column_values]
+        if data['groups'] is True:
+            stmt = sqlalchemy.select(group.c.link)
+            result = conn.execute(stmt)
+            column_values = result.fetchall()
+
+            value_list = [value for (value,) in column_values]
+
+        else:
+            stmt = sqlalchemy.select(group).where(group.c.id.in_(data['selected_groups']))
+            value_list = session.execute(stmt).fetchall()
 
         error_send = []
         for name in value_list:

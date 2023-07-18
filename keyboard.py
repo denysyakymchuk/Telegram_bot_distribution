@@ -10,6 +10,9 @@ list_group = KeyboardButton('/list')
 delete_group = KeyboardButton('/delete🚫')
 key_group = ReplyKeyboardMarkup(resize_keyboard=True).add(new_group, list_group, delete_group)
 
+all_groups = KeyboardButton('/all')
+select_groups = KeyboardButton('/select')
+send_key_groups = ReplyKeyboardMarkup(resize_keyboard=True).add(all_groups, select_groups)
 
 new_user = KeyboardButton('/create')
 list_user = KeyboardButton('/see')
