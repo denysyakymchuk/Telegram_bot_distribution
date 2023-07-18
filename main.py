@@ -348,7 +348,6 @@ async def process_select_group(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Form.optional_groups)
 async def optional_selecting_groups(message: types.Message, state: FSMContext):
     id_list = [int(x) for x in message.text.split(',')]
-    print(id_list)
     async with state.proxy() as data:
         data['selected_groups'] = id_list
 
@@ -369,7 +368,6 @@ async def process_message(message: types.Message, state: FSMContext):
         value_list = []
 
         if data['groups'] is True:
-            print('QWWWWWWWWWWWWWWWWWWWWWW')
             stmt = sqlalchemy.select(group.c.link)
             result = conn.execute(stmt)
             column_values = result.fetchall()
@@ -377,7 +375,6 @@ async def process_message(message: types.Message, state: FSMContext):
             value_list = [value for (value,) in column_values]
 
         else:
-            print('------------------------------------------------')
             stmt = sqlalchemy.select(group.c.link).where(group.c.id.in_(data['selected_groups']))
             column_values = session.execute(stmt).fetchall()
             value_list = [value for (value,) in column_values]

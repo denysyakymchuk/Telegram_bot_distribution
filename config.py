@@ -1,3 +1,4 @@
+import openai
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import logging
@@ -5,6 +6,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import MetaData
 
+
+openai.api_key = 'YOUR_API_KEY'
 
 logging.basicConfig(level=logging.INFO)
 
