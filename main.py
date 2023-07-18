@@ -8,6 +8,8 @@ from aiogram.utils import executor
 from sqlalchemy import delete
 from telethon.sync import TelegramClient
 from telethon import functions
+
+import tools
 from config import dp, session, conn, engine, bot
 from keyboard import buttons_start, key_group, key_user, send_key_groups
 from models import group, user
@@ -295,6 +297,9 @@ async def fsm_select_user(message: types.Message, state: FSMContext):
         global clientt, usr
         usr = session.query(user).filter_by(id=data['select_user']).first()
 
+        async with state.proxy() as data:
+            data['alias'] = usr[1]
+
         clientt = TelegramClient('session', api_id=int(usr[2]), api_hash=str(usr[3]))
 
         await clientt.start(phone=usr[4])
@@ -378,16 +383,21 @@ async def process_message(message: types.Message, state: FSMContext):
             stmt = sqlalchemy.select(group.c.link).where(group.c.id.in_(data['selected_groups']))
             column_values = session.execute(stmt).fetchall()
             value_list = [value for (value,) in column_values]
-        print(value_list)
         error_send = []
+
+        q = f'''
+         chatgpt пожалуйста поздоровайся со всеми учасниками группы от имени {data['alias']}, группа не {data['alias']} -
+         мы просто здороваемся от этого имени, не спрашивай как дела просто поздоровайся, можешь пожелать всем продуктивного 
+         дня и добавь пару смайликов'''
+
         for name in value_list:
-            try:
-                result = await clientt(functions.messages.SendMessageRequest(
-                    peer=name,
-                    message=data['message']
-                ))
-            except:
-                error_send.append(name)
+            # try:
+            result = await clientt(functions.messages.SendMessageRequest(
+                peer=name,
+                message=tools.generate_response(q)
+            ))
+            # except:
+            #     error_send.append(name)
 
         await clientt.disconnect()
 

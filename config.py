@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import MetaData
 
 
-openai.api_key = 'YOUR_API_KEY'
+openai.api_key = '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'
 
 logging.basicConfig(level=logging.INFO)
 
