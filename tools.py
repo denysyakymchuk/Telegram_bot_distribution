@@ -4,5 +4,5 @@ def ref_data(data):
         record = f"{item[0]} - {item[1]}"
         records.append(record)
 
-    result = ", ".join(records)
+    result = ",\n".join(records)
     return result
