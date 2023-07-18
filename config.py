@@ -13,7 +13,7 @@ API_ID = ''  # Ваш API ID из приложения Telegram
 API_HASH = ''  # Ваш API Hash из приложения Telegram
 
 
-engine = create_engine("sqlite+pysqlite:///test.db", echo=True)
+engine = create_engine("mysql+mysqlconnector://root:1234567890@127.0.0.1:3306/test", echo=True)
 conn = engine.connect()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

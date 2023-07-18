@@ -17,7 +17,7 @@ group = Table(
      "groups",
      metadata_obj,
      Column("id", Integer, primary_key=True),
-     Column("link", String),
+     Column("link", String(50)),
     )
 
 metadata_obj.create_all(engine)

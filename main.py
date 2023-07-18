@@ -1,3 +1,5 @@
+import os
+
 import sqlalchemy
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -186,6 +188,10 @@ async def deleting_group(message: types.Message, state: FSMContext):
 # start states for sms and return all users for select in NEXT state
 @dp.message_handler(commands='sms')
 async def build_sms(message: types.Message):
+    if os.path.exists('session.session'):
+        # Удаляем файл
+        os.remove('session.session')
+
     await message.reply("Виберіть номер користувача для відправки:")
     with engine.connect() as conn:
         usr = sqlalchemy.select(user)
@@ -205,11 +211,11 @@ async def fsm_select_user(message: types.Message, state: FSMContext):
     global clientt, usr
     usr = session.query(user).filter_by(id=data['select_user']).first()
 
-    clientt = TelegramClient('session_name', int(usr[1]), str(usr[2]))
+    clientt = TelegramClient('session', api_id=int(usr[2]), api_hash=str(usr[3]))
 
     try:
-        await clientt.start(phone=usr[3])
-        await clientt.send_code_request(str(usr[3]))
+        await clientt.start(phone=usr[4])
+        await clientt.send_code_request(str(usr[4]))
     except:
         None
 
@@ -234,20 +240,19 @@ async def process_message(message: types.Message, state: FSMContext):
     await state.finish()
 
     # create client and send sms
-    async with TelegramClient('session_name', int(usr[1]), str(usr[2])) as client:
-        await client.start()
 
-        stmt = sqlalchemy.select(group.c.link)
-        result = conn.execute(stmt)
-        column_values = result.fetchall()
-        value_list = [value for (value,) in column_values]
 
-        for name in value_list:
-            result = await client(functions.messages.SendMessageRequest(
-                peer=name,
-                message=data['message']
-            ))
-        await client.disconnect()
+    stmt = sqlalchemy.select(group.c.link)
+    result = conn.execute(stmt)
+    column_values = result.fetchall()
+    value_list = [value for (value,) in column_values]
+
+    for name in value_list:
+        result = await clientt(functions.messages.SendMessageRequest(
+            peer=name,
+            message=data['message']
+        ))
+    await clientt.disconnect()
 
     await message.reply("Повідомлення успішно відправлено!")
 
