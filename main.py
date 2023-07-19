@@ -391,13 +391,14 @@ async def process_message(message: types.Message, state: FSMContext):
          дня и добавь пару смайликов'''
 
         for name in value_list:
-            # try:
-            result = await clientt(functions.messages.SendMessageRequest(
-                peer=name,
-                message=tools.generate_response(q)
-            ))
-            # except:
-            #     error_send.append(name)
+            try:
+                result = await clientt(functions.messages.SendMessageRequest(
+                    peer=name,
+                    message=tools.generate_response(q)
+                ))
+            except Exception as error:
+                write_logs(str(error))
+                error_send.append(name)
 
         await clientt.disconnect()
 
