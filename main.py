@@ -381,13 +381,7 @@ async def process_message(message: types.Message, state: FSMContext):
             value_list = [value for (value,) in column_values]
         error_send = []
 
-        # q = f'''
-        #  chatgpt пожалуйста поздоровайся со всеми учасниками группы от имени {data['alias']}, группа не {data['alias']} -
-        #  мы просто здороваемся от этого имени, не спрашивай как дела просто поздоровайся, можешь пожелать всем продуктивного
-        #  дня и добавь пару смайликов'''
-
         for name in value_list:
-            # text = f'{tools.generate_response(q)} \n{data["message"]}!'
             try:
                 result = await clientt(functions.messages.SendMessageRequest(
                     peer=name,
