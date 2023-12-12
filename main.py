@@ -9,7 +9,6 @@ from sqlalchemy import delete
 from telethon.sync import TelegramClient
 from telethon import functions
 
-import tools
 from config import dp, session, conn, engine, bot
 from keyboard import buttons_start, key_group, key_user, send_key_groups
 from models import group, user
@@ -170,7 +169,6 @@ async def delete_group(message: types.Message):
 async def deleting_group(message: types.Message, state: FSMContext):
     try:
         delete_statement = delete(user).where(user.c.id == message.text)
-        # Выполнение операции удаления
         conn.execute(delete_statement)
         conn.commit()
         await message.reply('Користувача видалено!', reply_markup=buttons_start)
@@ -297,8 +295,6 @@ async def fsm_select_user(message: types.Message, state: FSMContext):
         global clientt, usr
         usr = session.query(user).filter_by(id=data['select_user']).first()
 
-        async with state.proxy() as data:
-            data['alias'] = usr[1]
 
         clientt = TelegramClient('session', api_id=int(usr[2]), api_hash=str(usr[3]))
 
@@ -385,17 +381,19 @@ async def process_message(message: types.Message, state: FSMContext):
             value_list = [value for (value,) in column_values]
         error_send = []
 
-        q = f'''
-         chatgpt пожалуйста поздоровайся со всеми учасниками группы от имени {data['alias']}, группа не {data['alias']} -
-         мы просто здороваемся от этого имени, не спрашивай как дела просто поздоровайся, можешь пожелать всем продуктивного 
-         дня и добавь пару смайликов'''
+        # q = f'''
+        #  chatgpt пожалуйста поздоровайся со всеми учасниками группы от имени {data['alias']}, группа не {data['alias']} -
+        #  мы просто здороваемся от этого имени, не спрашивай как дела просто поздоровайся, можешь пожелать всем продуктивного
+        #  дня и добавь пару смайликов'''
 
         for name in value_list:
+            # text = f'{tools.generate_response(q)} \n{data["message"]}!'
             try:
                 result = await clientt(functions.messages.SendMessageRequest(
                     peer=name,
-                    message=tools.generate_response(q)
+                    message=data['message']
                 ))
+
             except Exception as error:
                 write_logs(str(error))
                 error_send.append(name)
